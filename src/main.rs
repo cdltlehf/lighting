@@ -1,10 +1,10 @@
 use clap::Parser;
-use colortemp::temp_to_rgb;
 use image::{ImageBuffer, Rgba};
 use palette::Clamp;
 use palette::FromColor;
 use palette::{LinSrgb, Srgb};
 use rayon::prelude::*;
+use tempergb::rgb_from_temperature;
 
 #[derive(clap::ValueEnum, Clone, Debug)]
 enum ObjectFit {
@@ -22,7 +22,7 @@ struct Args {
     #[clap(long, default_value_t = 600)]
     height: u32,
     #[clap(long, default_value_t = 6500)]
-    temperature: i64,
+    temperature: u32,
     #[clap(long, default_value_t = 1.0)]
     intensity: f32,
 
@@ -73,12 +73,8 @@ fn main() {
     let outer_angle = f32::to_radians(outer_angle);
     let inner_angle = outer_angle * inner_angle_factor;
     let temp_color = {
-        let rgb = temp_to_rgb(temperature);
-        Srgb::new(
-            rgb.r as f32 / 255.0,
-            rgb.g as f32 / 255.0,
-            rgb.b as f32 / 255.0,
-        )
+        let rgb = rgb_from_temperature(temperature);
+        Srgb::from_components(rgb.into_components()).into_format::<f32>()
     };
     let inner_cos = inner_angle.cos();
     let outer_cos = outer_angle.cos();

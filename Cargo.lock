@@ -294,12 +294,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b05b61dc5112cbb17e4b6cd61790d9845d13888356391624cbe7e41efeac1e75"
 
 [[package]]
-name = "colortemp"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7b5f86d2987fdf49a4912194917d7b590b2bbf2bc407fe220d939b97080dfbc2"
-
-[[package]]
 name = "core2"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -582,10 +576,10 @@ name = "lighting"
 version = "0.1.0"
 dependencies = [
  "clap",
- "colortemp",
  "image",
  "palette",
  "rayon",
+ "tempergb",
 ]
 
 [[package]]
@@ -1070,6 +1064,12 @@ dependencies = [
  "quote",
  "unicode-ident",
 ]
+
+[[package]]
+name = "tempergb"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "681bde77f9c90db65fa3259ece4f5b99725437560572010554f9f470a28f823f"
 
 [[package]]
 name = "thiserror"
