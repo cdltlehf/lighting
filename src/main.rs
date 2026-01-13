@@ -102,7 +102,7 @@ fn main() {
         };
         let z = 0.0;
 
-        let dithering = (random(x, y) * 2.0 - 1.0) * dithering;
+        let dithering = (rand(x, y) * 2.0 - 1.0) * dithering;
 
         let (dx, dy, dz) = (x - light_pos.0, y - light_pos.1, z - light_pos.2);
         let distance = (dx * dx + dy * dy + dz * dz).sqrt();
@@ -133,6 +133,8 @@ fn smoothstep(edge0: f32, edge1: f32, x: f32) -> f32 {
     t * t * (3.0 - 2.0 * t)
 }
 
-fn random(x: f32, y: f32) -> f32 {
-    return ((x * 12.9898 + y * 78.233) * 43758.5453123).sin().fract();
+fn rand(x: f32, y: f32) -> f32 {
+    return ((x * 12.9898 + y * 78.233) * 43758.5453123)
+        .sin()
+        .rem_euclid(1.0);
 }
