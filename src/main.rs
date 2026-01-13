@@ -84,9 +84,9 @@ fn main() {
     let inner_cos = inner_angle.cos();
     let outer_cos = outer_angle.cos();
 
-    let mut img = ImageBuffer::<Rgba<u16>, Vec<u16>>::new(width, height);
+    let mut image = ImageBuffer::<Rgba<f32>, Vec<f32>>::new(width, height);
     let aspect_ratio = width as f32 / height as f32;
-    img.par_chunks_mut(4).enumerate().for_each(|(i, pixel)| {
+    image.par_chunks_mut(4).enumerate().for_each(|(i, pixel)| {
         let x_idx = (i as u32) % width;
         let y_idx = (i as u32) / width;
         let (x, y) = {
@@ -114,18 +114,15 @@ fn main() {
         let (nx, ny, nz) = (0.0, 0.0, 1.0);
         let intensity = intensity / (distance * distance + f32::EPSILON) * spot_effect;
         let diffusion = intensity * (lx * nx + ly * ny + lz * nz).max(0.0);
-        let lin_color = LinSrgb::from_color(temp_color) * diffusion;
+        let lin_color = LinSrgb::from_color(temp_color) * diffusion + dithering;
 
-        let color = Srgb::from_color(lin_color + dithering)
-            .clamp()
-            .into_format::<u16>();
-        pixel[0] = color.red;
-        pixel[1] = color.green;
-        pixel[2] = color.blue;
-        pixel[3] = 65535;
+        let final_color: Srgb<f32> = Srgb::from_linear(lin_color).clamp();
+        let (r, g, b) = final_color.into_components();
+        (pixel[0], pixel[1], pixel[2], pixel[3]) = (r, g, b, 1.0);
     });
-
-    img.save(output).unwrap();
+    image
+        .save(output)
+        .expect("Failed to save the generated image");
 }
 
 fn smoothstep(edge0: f32, edge1: f32, x: f32) -> f32 {
