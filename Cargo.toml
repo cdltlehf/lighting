@@ -5,7 +5,13 @@ edition = "2024"
 
 [dependencies]
 clap = { version = "4.5.54", features = ["derive"] }
+fastrand = "2.3.0"
 image = "0.25.9"
 palette = { version = "0.7.6", features = ["std"] }
 rayon = "1.11.0"
 tempergb = "0.1.2"
+
+[features]
+default = []
+u16 = []
+f32 = []

@@ -1,10 +1,29 @@
 use clap::Parser;
+use fastrand;
 use image::{ImageBuffer, Rgba};
 use palette::Clamp;
 use palette::FromColor;
 use palette::{LinSrgb, Srgb};
 use rayon::prelude::*;
 use tempergb::rgb_from_temperature;
+
+#[cfg(all(feature = "u16", feature = "f32"))]
+compile_error!("Features 'u16' and 'f32' cannot be enabled simultaneously");
+
+#[cfg(feature = "u16")]
+type PixelComponent = u16;
+#[cfg(feature = "u16")]
+const ALPHA_ONE: u16 = 65535;
+
+#[cfg(feature = "f32")]
+type PixelComponent = f32;
+#[cfg(feature = "f32")]
+const ALPHA_ONE: f32 = 1.0;
+
+#[cfg(not(any(feature = "u16", feature = "f32")))]
+type PixelComponent = u8;
+#[cfg(not(any(feature = "u16", feature = "f32")))]
+const ALPHA_ONE: u8 = 255;
 
 #[derive(clap::ValueEnum, Clone, Debug)]
 enum ObjectFit {
@@ -84,7 +103,7 @@ fn main() {
     let inner_cos = inner_angle.cos();
     let outer_cos = outer_angle.cos();
 
-    let mut image = ImageBuffer::<Rgba<f32>, Vec<f32>>::new(width, height);
+    let mut image = ImageBuffer::<Rgba<PixelComponent>, Vec<PixelComponent>>::new(width, height);
     let aspect_ratio = width as f32 / height as f32;
     image.par_chunks_mut(4).enumerate().for_each(|(i, pixel)| {
         let x_idx = (i as u32) % width;
@@ -102,7 +121,7 @@ fn main() {
         };
         let z = 0.0;
 
-        let dithering = (rand(x, y) * 2.0 - 1.0) * dithering;
+        let dithering = (fastrand::f32() - 0.5) * dithering * 2.0;
 
         let (dx, dy, dz) = (x - light_pos.0, y - light_pos.1, z - light_pos.2);
         let distance = (dx * dx + dy * dy + dz * dz).sqrt();
@@ -116,9 +135,11 @@ fn main() {
         let diffusion = intensity * (lx * nx + ly * ny + lz * nz).max(0.0);
         let lin_color = LinSrgb::from_color(temp_color) * diffusion + dithering;
 
-        let final_color: Srgb<f32> = Srgb::from_linear(lin_color).clamp();
+        let srgb: Srgb<f32> = Srgb::from_linear(lin_color);
+        let clamped: Srgb<f32> = srgb.clamp();
+        let final_color: Srgb<PixelComponent> = clamped.into_format();
         let (r, g, b) = final_color.into_components();
-        (pixel[0], pixel[1], pixel[2], pixel[3]) = (r, g, b, 1.0);
+        (pixel[0], pixel[1], pixel[2], pixel[3]) = (r, g, b, ALPHA_ONE);
     });
     image
         .save(output)
@@ -128,10 +149,4 @@ fn main() {
 fn smoothstep(edge0: f32, edge1: f32, x: f32) -> f32 {
     let t = ((x - edge0) / (edge1 - edge0)).clamp(0.0, 1.0);
     t * t * (3.0 - 2.0 * t)
-}
-
-fn rand(x: f32, y: f32) -> f32 {
-    return ((x * 12.9898 + y * 78.233) * 43758.5453123)
-        .sin()
-        .rem_euclid(1.0);
 }
